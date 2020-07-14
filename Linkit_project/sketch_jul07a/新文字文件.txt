@@ -1,0 +1,57 @@
+import time
+import sys
+import httplib, urllib
+import json
+import requests
+from collections import defaultdict
+import serial
+
+sys.path.insert(0, '/usr/lib/python2.7/bridge/')
+from bridgeclient import BridgeClient as bridgeclient
+
+value = bridgeclient()
+
+ser = serial.Serial("/dev/ttyS0",57600)
+
+deviceId = "D6Ty2449"
+deviceKey = "LsbIqnw00Amn5ry6"
+
+def post_to_mcs(payload):
+    headers = {"Content-type": "application/json", "deviceKey": deviceKey}
+    not_connected = 1
+    while (not_connected):
+        try:
+            conn = httplib.HTTPConnection("api.mediatek.com:80")
+            conn.connect()
+            not_connected = 0
+        except (httplib.HTTPException, socket.error) as ex:
+            print "Error: %s" % ex
+            time.sleep(10)  # sleep 10 seconds
+
+    conn.request("POST", "/mcs/v2/devices/" + deviceId + "/datapoints", json.dumps(payload), headers)
+    response = conn.getresponse()
+    print( "Coin_1", n1,"Coin_5",n5,"Coin_10",n10,"Coin50",n50,time.strftime("%c") )
+    data = response.read()
+    conn.close()
+
+def get_from_mcs(channelId):
+    headers = {"deviceKey":deviceKey}
+    url="https://api.mediatek.com/mcs/v2/devices/D6Ty2449/datachannels/Coin_Out/datapoints"
+    r = requests.get(url,headers=headers)
+    data = json.loads(r.text)
+    data = data[u'dataChannels'][0][u'dataPoints'][0][u'values'][u'value']
+    print("Coin_Out",data)
+    data = int(data)
+    out = str(data)
+    ser.write(out)
+
+while True:
+    n1 = value.get("Coin_1")
+    n5 = value.get("Coin_5")
+    n10 = value.get("Coin_10")
+    n50 = value.get("Coin_50")
+    tr = value.get("InformationOut")
+    payload = {"datapoints":[{"dataChnId":"Coin_1","values":{"value":n1}},{"dataChnId":"Coin_5","values":{"value":n5}},{"dataChnId":"Coin_10","values":{"value":n10},{"dataChnId":"Coin_50","values":{"value":n50}},{"dataChnId":"InformationOut","values":{"value":tr}}]}
+    post_to_mcs(payload)
+    get_from_mcs("Coin_Out")
+    time.sleep(10)

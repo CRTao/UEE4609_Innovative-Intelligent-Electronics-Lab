@@ -1,0 +1,53 @@
+import serial
+import time
+import requests
+
+ser = serial.Serial('/dev/ttyS0',9600)
+out  = serial.Serial('/dev/ttyS0',57600)
+
+device_id = "D6Ty2449"
+device_key = "LsbIqnw00Amn5ry6"
+
+url = "http://api.mediatek.com/mcs/v2/devices/" + device_id
+url += "/datapoints.csv"
+
+def MCS_upload(value,length,channel):
+        data_channel = str(channel)
+        data_channel +=",,"
+        data = data_channel+str(value)
+        r = requests.post(url,headers = {"deviceKey" : device_key,'Content-Type':'text/csv'},data=data)
+        print r.text
+
+def MCS_download(value,length):
+        data = data_channel+str(value)
+        r = requests.get(url,headers = {"deviceKey" : device_key,'Content-Type':'text/csv'},data=data)
+        print r.text
+
+print "Start"
+while True:
+        if ser.read()=='a':
+                IncommingNum = ser.read()
+                Coin_1 = int(ser.read(int(IncommingNum)))
+                a = int(IncommingNum)
+                MCS_upload(Coin_1,a,"Coin_1")
+        elif  ser.read()=='b':
+                IncommingNum = ser.read()
+                Coin_5 = int(ser.read(int(IncommingNum)))
+                b = int(IncommingNum)
+                MCS_upload(Coin_5,b,"Coin_5")
+        elif  ser.read()=='c':
+                IncommingNum = ser.read()
+                Coin_10 = int(ser.read(int(IncommingNum)))
+                c = int(IncommingNum)
+                MCS_upload(Coin_10,c,"Coin_10")
+        elif  ser.read()=='d':
+                IncommingNum = ser.read()
+                Coin_50 = int(ser.read(int(IncommingNum)))
+                d = int(IncommingNum)
+                MCS_upload(Coin_50,d,"Coin_50")
+         elif  ser.read()=='e':
+                IncommingNum = ser.read()
+                InformationOut = ser.read(int(IncommingNum))
+                e = int(IncommingNum)
+                MCS_upload(InformationOut,e,"InformationOut")
+        out.write(Coin_Out);
